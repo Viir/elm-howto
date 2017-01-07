@@ -6,10 +6,12 @@ audioFileUrl = "http://dict.leo.org/media/audio/ZXOapx_FyRojukaMRHKS_w.ogg"
 main =
   beginnerProgram { model = 0, view = view, update = update }
 
+playbackView audioFileUrl =
+  audio [ controls True, autoplay True ]
+    [ source [ src audioFileUrl ] [] ]
+
 view model =
   div []
-    [ audio [ controls True, autoplay True ]
-        [ source [ src audioFileUrl ] [] ]
-    ]
+    [ playbackView audioFileUrl ]
 
 update msg model = model
