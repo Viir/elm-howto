@@ -1,3 +1,7 @@
+-- This code file demonstrates how to control starting playback of audio in the update function of the elm program.
+-- Source URL for the Audio file and playback volume can be configured from the UI.
+-- Since its pure elm and does not rely on ports or native, it also works on http://elm-lang.org/try (tested with chrome and edge).
+
 import Html exposing (beginnerProgram, div, button, text, audio, source, input, table)
 import Html.Attributes exposing (..)
 import Html.Attributes as HA
@@ -23,7 +27,7 @@ init : Model
 init =
   { selectedPlaybackParams =
     {
-      sourceUrl = "http://dict.leo.org/media/audio/ZXOapx_FyRojukaMRHKS_w.ogg",
+      sourceUrl = "http://dict.leo.org/media/audio/ZXOapx_FyRojukaMRHKS_w.mp3",
       volume = 0.7
     },
     listPlayback = []
