@@ -56,7 +56,9 @@ view model =
               onInput SelectPlaybackVolume] [], text <| (((toString (selectedPlaybackVolume * 100))) ++ "%")]
           ],
           button [ onClick StartPlayback ] [ text "click to start playback" ]],
-        div [] (model.listPlayback |> List.map playbackView) ]
+          div [] [text "-"],
+          div [] [text (toString (model.listPlayback |> List.length) ++ " playbacks started")],
+          div [] (model.listPlayback |> List.map playbackView) ]
 
 startPlayback : Model -> Model
 startPlayback model =
