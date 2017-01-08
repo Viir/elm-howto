@@ -1,3 +1,5 @@
+-- This code file demonstrates how to obtain the 'offset' portion of a mouse event and how to disable hittesting on svg elements.
+
 import Html exposing (beginnerProgram, div, button, text, audio, source, input, table)
 import Html.Events
 import Svg exposing (Svg)
@@ -38,11 +40,11 @@ view model = div [][
         ][
             Svg.g [ transform "translate(10, 40)"] [
                 Svg.rect [ x "0", y "0", width "300", height "300", fill "grey" , opacity "0.5", eventOffsetToMessageAttribute] [],
-                Svg.circle [ cx (toString model.mouseOffset.x), cy (toString model.mouseOffset.y), r "10", fill "blue", opacity "0.5"] []
+                Svg.circle [ cx (toString model.mouseOffset.x), cy (toString model.mouseOffset.y), r "10", fill "blue", opacity "0.5", pointerEvents "none"] []
             ]
         ],
   div [][
       text ("mouse offset: " ++ (toString model.mouseOffset ))
-  ]
+      ]
   ]
 
