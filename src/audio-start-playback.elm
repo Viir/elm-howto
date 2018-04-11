@@ -20,7 +20,7 @@ type alias Model = {
 
 type Msg =
   SelectAudioSourceUrl String |
-  SelectPlaybackVolume String |
+  SelectPlaybackVolume Float |
   StartPlayback
 
 init : Model
@@ -33,9 +33,11 @@ init =
     listPlayback = []
   }
 
+main : Program Never Model Msg
 main =
   beginnerProgram { model = init, view = view, update = update }
 
+playbackView : PlaybackParams -> Html.Html msg
 playbackView playbackParams =
   audio [ controls False, autoplay True, property "volume" (Json.Encode.string (toString playbackParams.volume)) ]
     [ source [ src playbackParams.sourceUrl ] [] ]
@@ -57,7 +59,7 @@ view model =
             div [] [text "playback volume"],
             div [] [input [
               type_ "range" , HA.min "0" , HA.max "100", value <| toString (selectedPlaybackVolume * 100),
-              onInput SelectPlaybackVolume] [], text <| (((toString (selectedPlaybackVolume * 100))) ++ "%")]
+              onInput (String.toFloat >> (Result.withDefault 40) >> ((*) 0.01) >> SelectPlaybackVolume) ] [], text <| ((((selectedPlaybackVolume * 100) |> round |> toString)) ++ "%")]
           ],
           button [ onClick StartPlayback ] [ text "click to start playback" ]],
           div [] [text "-"],
@@ -73,15 +75,22 @@ updatePlaybackParams msg playbackParams =
   case msg of
     SelectAudioSourceUrl url ->
       { playbackParams | sourceUrl = url}
-    SelectPlaybackVolume volumeString ->
-      { playbackParams | volume = (String.toFloat volumeString |> Result.withDefault 40) * 0.01 }
+    SelectPlaybackVolume volume ->
+      { playbackParams | volume = volume }
     _ -> playbackParams
 
 update : Msg -> Model -> Model
 update msg model =
-  let withPlaybackParams = { model | selectedPlaybackParams = updatePlaybackParams msg model.selectedPlaybackParams }
+  let
+    withPlaybackParams = { model | selectedPlaybackParams = updatePlaybackParams msg model.selectedPlaybackParams }
   in
     case msg of
-      StartPlayback ->
-        (startPlayback withPlaybackParams)
-      _ -> withPlaybackParams
+    StartPlayback ->
+      (startPlayback withPlaybackParams)
+    SelectPlaybackVolume volume ->
+      { withPlaybackParams | listPlayback = (model.listPlayback |> List.map (withVolume volume)) }
+    _ -> withPlaybackParams
+
+withVolume : Float -> PlaybackParams -> PlaybackParams
+withVolume volume paramsBefore =
+  { paramsBefore | volume = volume }
