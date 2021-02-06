@@ -72,7 +72,12 @@ view state =
         selectedPlaybackVolume =
             selectedPlaybackParams.volume
     in
-    Html.div []
+    Html.div
+        [ HA.style "background-color" "hsl(0, 0%, 10%)"
+        , HA.style "color" "hsl(0, 0%, 90%)"
+        , HA.style "padding" "1em"
+        , HA.style "font-family" "sans-serif"
+        ]
         [ Html.div []
             [ Html.text "configure audio parameters"
             , Html.div [ HA.style "margin" "10px" ]
