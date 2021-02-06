@@ -1,14 +1,16 @@
--- This code file demonstrates how to control starting playback of audio in the update function of the elm program.
--- Source URL for the Audio file and playback volume can be configured from the UI.
--- Since its pure elm and does not rely on ports or native, it also works on http://elm-lang.org/try (tested with chrome and edge).
+{-
+   This app demonstrates how to control starting playback of audio in the update function of the elm program.
+   It also offers the user to configure the URL to the audio file and the playback volume via the HTML GUI.
+   Since it's pure elm and does not rely on ports, it also works in environments like https://elm-lang.org/try
+-}
 
 
-module Main exposing (Model, Msg(..), PlaybackParams, init, main, playbackView, startPlayback, update, updatePlaybackParams, view, withVolume)
+module Main exposing (main)
 
 import Browser
-import Html exposing (audio, button, div, input, source, table, text)
-import Html.Attributes as HA exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html
+import Html.Attributes as HA
+import Html.Events
 import Json.Encode
 
 
@@ -18,25 +20,25 @@ type alias PlaybackParams =
     }
 
 
-type alias Model =
+type alias State =
     { selectedPlaybackParams : PlaybackParams
-    , listPlayback : List PlaybackParams
+    , startedPlaybacks : List PlaybackParams
     }
 
 
-type Msg
+type Event
     = SelectAudioSourceUrl String
     | SelectPlaybackVolume Float
     | StartPlayback
 
 
-init : Model
+init : State
 init =
     { selectedPlaybackParams =
         { sourceUrl = "http://dict.leo.org/media/audio/ZXOapx_FyRojukaMRHKS_w.mp3"
         , volume = 0.7
         }
-    , listPlayback = []
+    , startedPlaybacks = []
     }
 
 
@@ -48,17 +50,21 @@ main =
         }
 
 
-playbackView : PlaybackParams -> Html.Html msg
+playbackView : PlaybackParams -> Html.Html event
 playbackView playbackParams =
-    audio [ controls False, autoplay True, property "volume" (Json.Encode.string (String.fromFloat playbackParams.volume)) ]
-        [ source [ src playbackParams.sourceUrl ] [] ]
+    Html.audio
+        [ HA.controls False
+        , HA.autoplay True
+        , HA.property "volume" (Json.Encode.string (String.fromFloat playbackParams.volume))
+        ]
+        [ Html.source [ HA.src playbackParams.sourceUrl ] [] ]
 
 
-view : Model -> Html.Html Msg
-view model =
+view : State -> Html.Html Event
+view state =
     let
         selectedPlaybackParams =
-            model.selectedPlaybackParams
+            state.selectedPlaybackParams
 
         selectedSourceUrl =
             selectedPlaybackParams.sourceUrl
@@ -66,42 +72,49 @@ view model =
         selectedPlaybackVolume =
             selectedPlaybackParams.volume
     in
-    div []
-        [ div []
-            [ text "configure audio parameters"
-            , div [ style "margin" "10px" ]
-                [ div [] [ text "url to audio file" ]
-                , div [] [ input [ placeholder "url to audio file", onInput SelectAudioSourceUrl, value selectedSourceUrl ] [] ]
-                , div [] [ text "-" ]
-                , div [] [ text "playback volume" ]
-                , div []
-                    [ input
-                        [ type_ "range"
-                        , HA.min "0"
-                        , HA.max "100"
-                        , value <| String.fromFloat (selectedPlaybackVolume * 100)
-                        , onInput (String.toFloat >> Maybe.withDefault 40 >> (*) 0.01 >> SelectPlaybackVolume)
+    Html.div []
+        [ Html.div []
+            [ Html.text "configure audio parameters"
+            , Html.div [ HA.style "margin" "10px" ]
+                [ Html.div [] [ Html.text "url to audio file" ]
+                , Html.div []
+                    [ Html.input
+                        [ HA.placeholder "url to audio file"
+                        , Html.Events.onInput SelectAudioSourceUrl
+                        , HA.value selectedSourceUrl
                         ]
                         []
-                    , text <| (((selectedPlaybackVolume * 100) |> round |> String.fromInt) ++ "%")
+                    ]
+                , Html.div [] [ Html.text "-" ]
+                , Html.div [] [ Html.text "playback volume" ]
+                , Html.div []
+                    [ Html.input
+                        [ HA.type_ "range"
+                        , HA.min "0"
+                        , HA.max "100"
+                        , HA.value <| String.fromFloat (selectedPlaybackVolume * 100)
+                        , Html.Events.onInput (String.toFloat >> Maybe.withDefault 40 >> (*) 0.01 >> SelectPlaybackVolume)
+                        ]
+                        []
+                    , Html.text <| (((selectedPlaybackVolume * 100) |> round |> String.fromInt) ++ "%")
                     ]
                 ]
-            , button [ onClick StartPlayback ] [ text "click to start playback" ]
+            , Html.button [ Html.Events.onClick StartPlayback ] [ Html.text "click to start playback" ]
             ]
-        , div [] [ text "-" ]
-        , div [] [ text (String.fromInt (model.listPlayback |> List.length) ++ " playbacks started") ]
-        , div [] (model.listPlayback |> List.map playbackView)
+        , Html.div [] [ Html.text "-" ]
+        , Html.div [] [ Html.text (String.fromInt (state.startedPlaybacks |> List.length) ++ " playbacks started") ]
+        , Html.div [] (state.startedPlaybacks |> List.map playbackView)
         ]
 
 
-startPlayback : Model -> Model
-startPlayback model =
-    { model | listPlayback = [ model.listPlayback, [ model.selectedPlaybackParams ] ] |> List.concat }
+startPlayback : State -> State
+startPlayback state =
+    { state | startedPlaybacks = state.startedPlaybacks ++ [ state.selectedPlaybackParams ] }
 
 
-updatePlaybackParams : Msg -> PlaybackParams -> PlaybackParams
-updatePlaybackParams msg playbackParams =
-    case msg of
+updatePlaybackParams : Event -> PlaybackParams -> PlaybackParams
+updatePlaybackParams event playbackParams =
+    case event of
         SelectAudioSourceUrl url ->
             { playbackParams | sourceUrl = url }
 
@@ -112,18 +125,18 @@ updatePlaybackParams msg playbackParams =
             playbackParams
 
 
-update : Msg -> Model -> Model
-update msg model =
+update : Event -> State -> State
+update event state =
     let
         withPlaybackParams =
-            { model | selectedPlaybackParams = updatePlaybackParams msg model.selectedPlaybackParams }
+            { state | selectedPlaybackParams = updatePlaybackParams event state.selectedPlaybackParams }
     in
-    case msg of
+    case event of
         StartPlayback ->
             startPlayback withPlaybackParams
 
         SelectPlaybackVolume volume ->
-            { withPlaybackParams | listPlayback = model.listPlayback |> List.map (withVolume volume) }
+            { withPlaybackParams | startedPlaybacks = state.startedPlaybacks |> List.map (withVolume volume) }
 
         _ ->
             withPlaybackParams
